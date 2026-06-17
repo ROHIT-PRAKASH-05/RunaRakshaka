@@ -1,0 +1,489 @@
+# ==============================================================================
+#  RunaRakshaka  —  Shared CSS  (design tokens + global styles)
+#  Import and call inject_shared_css() on every page, before rendering content.
+#
+#  This file is the single canonical stylesheet for the app. Every class name
+#  that existed before (.content-card, .stat-card, .mod-card, .pill, .risk-
+#  banner, .warn-card, .rec-card, .derived-chip, .info-row, .perf-metric,
+#  .model-card, .overall-card, .page-hero, .dev-card, .page-footer, .step-row,
+#  etc.) is kept exactly as-is on purpose: pages that were not touched in this
+#  pass still render correctly, just with the refreshed token values below.
+#
+#  RISK_TIERS / get_risk_tier now live in components/design_system.py (the
+#  single source of truth for the component library). They're re-exported
+#  here so `from components.shared_css import get_risk_tier` keeps working
+#  for any existing page that imports them from this module.
+# ==============================================================================
+
+import streamlit as st
+from components.design_system import RISK_TIERS, get_risk_tier  # noqa: F401  (re-exported)
+
+SHARED_CSS = """
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ==========================================================================
+   DESIGN TOKENS
+   A clean, light fintech palette — cyan/teal as the brand voice, with calm
+   neutrals so it reads as a precise instrument rather than a slide deck.
+   ========================================================================== */
+:root {
+    --font-display: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    /* brand */
+    --primary: #00B4D8;
+    --primary-dark: #0096B7;
+    --primary-light: #E0F7FB;
+    --primary-glow: rgba(0, 180, 216, .16);
+
+    /* legacy aliases — kept so older inline styles / pages referencing
+       var(--accent) continue to resolve correctly */
+    --accent: var(--primary);
+    --accent-dark: var(--primary-dark);
+
+    /* neutrals */
+    --ink: #0F172A;
+    --ink-soft: #1E293B;
+    --muted: #64748B;
+    --muted-light: #94A3B8;
+    --border: #E6E9F0;
+    --border-soft: #EEF1F6;
+    --bg: #FAFBFD;
+    --bg-soft: #F4F6FA;
+    --card: #FFFFFF;
+
+    /* status palette — risk banners, warn cards, recommendations, badges */
+    --green: #16A34A;  --green-bg: #F0FDF4;  --green-border: #BBF7D0;  --green-pill: #DCFCE7;
+    --amber: #D97706;  --amber-bg: #FFFBEB;  --amber-border: #FDE68A;  --amber-pill: #FEF3C7;
+    --red:   #E11D48;  --red-bg:   #FFF1F3;  --red-border:   #FECDD3; --red-pill:   #FFE4E9;
+    --violet:#7C3AED;  --violet-bg:#F5F3FF;  --violet-border:#DDD6FE;  --violet-pill:#EDE9FE;
+
+    /* elevation + radius scale */
+    --shadow-xs: 0 1px 2px rgba(15, 23, 42, .04);
+    --shadow-sm: 0 2px 10px rgba(15, 23, 42, .06);
+    --shadow-md: 0 10px 28px rgba(15, 23, 42, .08);
+    --shadow-lg: 0 24px 48px rgba(15, 23, 42, .12);
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 20px;
+    --radius-xl: 26px;
+    --ease: cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ==========================================================================
+   GLOBAL APP SHELL
+   ========================================================================== */
+.stApp { background: var(--bg); }
+
+html, body, [class*="css"] { font-family: var(--font-body); }
+h1, h2, h3, h4, h5 { font-family: var(--font-display); color: var(--ink); letter-spacing: -.01em; }
+
+/* Streamlit auto-generates a multipage nav above any custom sidebar content.
+   Hiding it here (rather than only per-page) keeps a single, intentional
+   nav everywhere render_sidebar() is used. */
+[data-testid="stSidebarNav"] { display: none; }
+
+/* Quieter chrome: drop the default hamburger menu / "Made with Streamlit"
+   footer so the product reads as a finished dashboard, not a notebook. */
+#MainMenu { visibility: hidden; }
+footer { visibility: hidden; }
+header[data-testid="stHeader"] { background: transparent; }
+
+.block-container { padding-top: 1.6rem; max-width: 1180px; }
+
+/* slim, quiet scrollbars */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted-light); }
+
+/* ==========================================================================
+   NATIVE WIDGET POLISH
+   Light touch on Streamlit's own controls so they don't clash with the
+   custom card system. Intentionally conservative — these selectors are
+   additive and never break the invisible whole-card button trick below
+   (that trick uses !important and wins on specificity regardless).
+   ========================================================================== */
+.stButton > button {
+    border-radius: var(--radius-sm) !important;
+    font-weight: 700 !important;
+    font-family: var(--font-body) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--ink) !important;
+    transition: all .18s var(--ease);
+}
+.stButton > button:hover {
+    border-color: var(--primary) !important;
+    color: var(--primary-dark) !important;
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%) !important;
+    border: none !important;
+    color: #fff !important;
+    box-shadow: var(--shadow-sm);
+}
+.stButton > button[kind="primary"]:hover {
+    box-shadow: 0 14px 30px var(--primary-glow);
+    transform: translateY(-2px);
+}
+
+.stTextInput input, .stNumberInput input,
+.stSelectbox div[data-baseweb="select"] > div,
+.stDateInput input {
+    border-radius: var(--radius-sm) !important;
+    border-color: var(--border) !important;
+}
+.stTextInput input:focus, .stNumberInput input:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+.stSlider [data-baseweb="slider"] [role="slider"] {
+    background-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px var(--primary-glow) !important;
+}
+.stTabs [data-baseweb="tab-list"] { gap: 6px; }
+.stTabs [data-baseweb="tab"] { border-radius: var(--radius-sm) var(--radius-sm) 0 0; font-weight: 700; }
+[data-testid="stMetric"] {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: .9rem 1rem; box-shadow: var(--shadow-xs);
+}
+
+/* ==========================================================================
+   SECTION LABEL
+   ========================================================================== */
+.sec-label {
+    font-size: .72rem; font-weight: 800; color: var(--primary);
+    text-transform: uppercase; letter-spacing: .14em; margin: .2rem 0 .9rem;
+    display: flex; align-items: center; gap: .6rem; font-family: var(--font-display);
+}
+.sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ==========================================================================
+   HOME HERO  (app.py)
+   ========================================================================== */
+.hero {
+    text-align: center; padding: 2.4rem 1rem 1.8rem; position: relative;
+}
+.hero::before {
+    /* soft ambient glow behind the hero — the one deliberate flourish */
+    content: ''; position: absolute; top: -40px; left: 50%; width: 520px; height: 320px;
+    transform: translateX(-50%); border-radius: 50%;
+    background: radial-gradient(closest-side, var(--primary-glow), transparent 70%);
+    z-index: 0; pointer-events: none;
+}
+.hero-title {
+    font-family: var(--font-display); font-size: 2.6rem; font-weight: 800; color: var(--ink);
+    margin: .3rem 0 .3rem; letter-spacing: -.02em; position: relative; z-index: 1;
+}
+.hero-sub {
+    font-size: 1.04rem; color: var(--muted); margin-bottom: 1.1rem;
+    position: relative; z-index: 1;
+}
+
+/* ==========================================================================
+   SUB-PAGE HERO  (.page-hero — used by individual prediction pages)
+   ========================================================================== */
+.page-hero {
+    background: linear-gradient(135deg, #FFFFFF 0%, var(--bg-soft) 100%);
+    border: 1px solid var(--border); border-radius: var(--radius-xl);
+    padding: 1.9rem 2.1rem 1.7rem; margin-bottom: 1.7rem;
+    border-left: 4px solid var(--hero-accent, var(--primary));
+    box-shadow: var(--shadow-xs);
+}
+.page-hero-icon  { font-size: 2.1rem; margin-bottom: .45rem; }
+.page-hero-title { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; color: var(--ink); margin-bottom: .25rem; }
+.page-hero-sub   { font-size: .93rem; color: var(--muted); margin-bottom: .8rem; line-height: 1.65; max-width: 72ch; }
+
+/* ==========================================================================
+   PILLS / BADGES
+   ========================================================================== */
+.pill {
+    display: inline-block; padding: 5px 14px; border-radius: 999px;
+    font-size: .72rem; font-weight: 700; margin: 2px; letter-spacing: .02em;
+    border: 1px solid transparent;
+}
+.pill-blue   { color: var(--primary-dark); background: var(--primary-light); }
+.pill-green  { color: #15803D; background: var(--green-pill); }
+.pill-amber  { color: #B45309; background: var(--amber-pill); }
+.pill-violet { color: #6D28D9; background: var(--violet-pill); }
+.pill-red    { color: #BE123C; background: var(--red-pill); }
+
+/* ==========================================================================
+   CARDS
+   ========================================================================== */
+.content-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 1.5rem 1.6rem; box-shadow: var(--shadow-xs);
+    margin-bottom: 1rem; overflow-x: auto;
+}
+
+.input-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 1.35rem 1.45rem; box-shadow: var(--shadow-sm);
+    margin-bottom: 1.2rem;
+}
+.input-card-label {
+    font-size: .68rem; font-weight: 800; color: var(--primary);
+    text-transform: uppercase; letter-spacing: .12em; margin-bottom: .6rem;
+    font-family: var(--font-display);
+}
+
+/* result / stat metric cards */
+.res-card, .stat-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 1.15rem .95rem; text-align: center;
+    box-shadow: var(--shadow-xs);
+    transition: box-shadow .18s var(--ease), transform .18s var(--ease);
+}
+.res-card:hover, .stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.res-val, .stat-val { font-family: var(--font-display); font-size: 1.7rem; font-weight: 800; line-height: 1; }
+.res-lbl, .stat-lbl { font-size: .78rem; color: var(--muted); margin-top: 5px; font-weight: 600; }
+
+/* per-model risk card (unified dashboard) */
+.model-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 1.15rem 1rem 1.05rem; text-align: center;
+    box-shadow: var(--shadow-xs);
+    border-top: 3px solid var(--mc-color, var(--primary));
+    height: 100%;
+    transition: box-shadow .2s var(--ease), transform .2s var(--ease);
+}
+.model-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.model-card-icon    { font-size: 1.4rem; margin-bottom: .35rem; }
+.model-card-title   {
+    font-size: .76rem; font-weight: 800; color: var(--ink); margin-bottom: .5rem;
+    text-transform: uppercase; letter-spacing: .05em; font-family: var(--font-display);
+}
+.model-card-risk    { font-family: var(--font-display); font-size: 1.85rem; font-weight: 800; color: var(--mc-color, var(--primary)); line-height: 1; }
+.model-card-weight  { font-size: .7rem; color: var(--muted-light); font-weight: 600; margin-top: 2px; }
+.model-card-contrib {
+    font-size: .78rem; font-weight: 700; color: var(--ink); margin-top: 5px;
+    background: var(--bg-soft); border-radius: 7px; padding: .22rem .55rem; display: inline-block;
+}
+
+/* overall ensemble card (unified dashboard) */
+.overall-card {
+    background: linear-gradient(135deg, var(--violet-bg) 0%, #EEEAFD 100%);
+    border: 1px solid var(--violet-border); border-radius: var(--radius-lg);
+    padding: 1.35rem 1.2rem 1.25rem; text-align: center;
+    box-shadow: 0 8px 26px rgba(124, 58, 237, .12);
+    height: 100%;
+}
+.overall-eyebrow {
+    font-size: .65rem; font-weight: 800; color: var(--violet);
+    text-transform: uppercase; letter-spacing: .12em; margin-bottom: .5rem;
+    font-family: var(--font-display);
+}
+.overall-val { font-family: var(--font-display); font-size: 2.5rem; font-weight: 800; line-height: 1; }
+.overall-lbl { font-size: .8rem; color: var(--muted); font-weight: 600; margin-top: 5px; }
+.overall-level {
+    margin-top: .75rem; font-size: .82rem; font-weight: 800;
+    padding: .32rem .85rem; border-radius: 99px; display: inline-block;
+}
+
+/* module / feature cards (app.py home) */
+.mod-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-xl);
+    padding: 1.55rem 1.45rem; height: 100%;
+    box-shadow: var(--shadow-xs);
+    border-top: 3px solid var(--mod-accent, var(--primary));
+    transition: box-shadow .2s var(--ease), transform .2s var(--ease);
+}
+.mod-icon {
+    width: 48px; height: 48px; border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.45rem; margin-bottom: .85rem;
+    background: var(--mod-accent-soft, var(--primary-light));
+}
+.mod-title { font-family: var(--font-display); font-size: 1.1rem; font-weight: 800; color: var(--ink); margin-bottom: .3rem; }
+.mod-desc  { font-size: .86rem; color: var(--muted); line-height: 1.6; margin-bottom: .85rem; }
+.chip-row  { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+    font-size: .72rem; font-weight: 600; color: var(--ink-soft);
+    background: var(--bg-soft); border: 1px solid var(--border-soft);
+    border-radius: 8px; padding: 3px 9px;
+}
+.mod-cta {
+    display: flex; align-items: center; gap: 4px;
+    font-size: .82rem; font-weight: 700; color: var(--primary-dark);
+    margin-top: .95rem; padding-top: .75rem; border-top: 1px solid var(--border-soft);
+}
+
+/* Whole-card click target ---------------------------------------------------
+   Targets stColumn (current Streamlit DOM, not the retired "column" name)
+   and forces the intermediate stElementContainer wrapper back to
+   position:static so the invisible button's inset:0 resolves against the
+   column itself, covering the full card. */
+div[data-testid="stColumn"]:has(div[data-testid="stButton"]) { position: relative; }
+div[data-testid="stColumn"]:has(div[data-testid="stButton"]):hover .mod-card {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-4px);
+    border-color: var(--mod-accent, var(--primary));
+}
+div[data-testid="stColumn"]:has(div[data-testid="stButton"]) div[data-testid="stElementContainer"]:has(div[data-testid="stButton"]) {
+    position: static;
+}
+div[data-testid="stColumn"]:has(div[data-testid="stButton"]) div[data-testid="stButton"] {
+    position: absolute; inset: 0; margin: 0; z-index: 5;
+}
+div[data-testid="stColumn"]:has(div[data-testid="stButton"]) div[data-testid="stButton"] button {
+    width: 100%; height: 100%; padding: 0;
+    background: transparent !important; border: none !important;
+    color: transparent !important; box-shadow: none !important; cursor: pointer;
+}
+div[data-testid="stColumn"]:has(div[data-testid="stButton"]) div[data-testid="stButton"] button:focus-visible {
+    outline: 2px solid var(--primary); outline-offset: 3px; border-radius: var(--radius-xl);
+}
+
+/* ==========================================================================
+   RISK BANNER / WARN / RECOMMENDATION / DERIVED METRIC
+   ========================================================================== */
+.risk-banner {
+    border-radius: var(--radius-lg); padding: 1.05rem 2rem; text-align: center;
+    color: #fff; font-size: 1.15rem; font-weight: 800;
+    letter-spacing: .04em; margin: 1rem 0;
+    box-shadow: var(--shadow-md);
+}
+@media (max-width: 640px) {
+    .risk-banner { font-size: .95rem; padding: .85rem 1.2rem; letter-spacing: .02em; }
+}
+
+.warn-card {
+    background: var(--amber-bg); border: 1px solid var(--amber-border);
+    border-left: 4px solid var(--amber); border-radius: var(--radius-lg);
+    padding: 1.2rem 1.5rem; margin-bottom: 1rem;
+}
+.warn-title { font-weight: 800; color: var(--amber); font-size: .95rem; margin-bottom: .5rem; font-family: var(--font-display); }
+.warn-body  { font-size: .86rem; color: var(--ink); line-height: 1.7; }
+
+.rec-card {
+    border-radius: var(--radius-lg); padding: 1.15rem 1.4rem;
+    border-left: 4px solid var(--rc-color, var(--primary));
+    background: var(--rc-bg, var(--bg-soft));
+    font-size: .88rem; color: var(--ink); line-height: 1.7;
+}
+.rec-title { font-weight: 800; font-size: .92rem; margin-bottom: .4rem; color: var(--rc-color, var(--primary)); font-family: var(--font-display); }
+
+.derived-chip {
+    background: var(--primary-light); border: 1px solid #BAE6FD; border-radius: var(--radius-sm);
+    padding: .75rem 1rem; text-align: center;
+}
+.derived-chip-val { font-family: var(--font-display); font-size: 1.25rem; font-weight: 800; color: var(--primary-dark); }
+.derived-chip-lbl { font-size: .74rem; color: var(--muted); font-weight: 600; }
+
+.info-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0; border-bottom: 1px solid var(--border); font-size: .85rem;
+}
+.info-row:last-child { border-bottom: none; }
+.info-key   { color: var(--muted); font-weight: 600; }
+.info-value { color: var(--ink); font-weight: 700; }
+
+.perf-metric {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 1.05rem .9rem; text-align: center;
+    box-shadow: var(--shadow-xs);
+    border-top: 3px solid var(--pm-color, var(--primary));
+}
+.perf-metric-val { font-family: var(--font-display); font-size: 1.5rem; font-weight: 800; color: var(--pm-color, var(--primary)); }
+.perf-metric-lbl { font-size: .76rem; color: var(--muted); margin-top: 3px; font-weight: 600; }
+
+/* ==========================================================================
+   TECH BADGE  /  STEP PIPELINE
+   ========================================================================== */
+.tech-badge {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 9px 6px; text-align: center; font-size: .78rem; font-weight: 700;
+    transition: box-shadow .15s var(--ease), transform .15s var(--ease);
+}
+.tech-badge:hover { box-shadow: var(--shadow-sm); transform: translateY(-1px); }
+
+.step-row { display: flex; align-items: flex-start; gap: 12px; padding: 7px 0; }
+.step-num {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--primary);
+    color: #fff; font-size: .68rem; font-weight: 800;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.step-text { font-size: .85rem; color: var(--ink); padding-top: 2px; font-weight: 500; }
+
+/* ==========================================================================
+   SIDEBAR
+   ========================================================================== */
+section[data-testid="stSidebar"] {
+    background: var(--card);
+    border-right: 1px solid var(--border);
+}
+section[data-testid="stSidebar"] .block-container { padding-top: 1rem; }
+
+.sidebar-brand {
+    text-align: center; padding: 1.1rem 0 1.3rem;
+    border-bottom: 1px solid var(--border); margin-bottom: .6rem;
+}
+.sidebar-brand-icon {
+    width: 52px; height: 52px; margin: 0 auto .55rem; border-radius: 14px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; box-shadow: 0 8px 20px var(--primary-glow);
+}
+.sidebar-brand-title { font-family: var(--font-display); font-size: 1.15rem; font-weight: 800; color: var(--ink); letter-spacing: -.01em; }
+.sidebar-brand-sub   { font-size: .73rem; color: var(--muted); margin-top: .2rem; letter-spacing: .03em; }
+
+.sidebar-section-label {
+    font-size: .68rem; font-weight: 800; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .1em; margin: .8rem 0 .6rem;
+    font-family: var(--font-display);
+}
+
+[data-testid="stPageLink"] > a {
+    font-size: .87rem !important; padding: 8px 10px !important;
+    border-radius: var(--radius-sm) !important; font-weight: 600 !important;
+    transition: background .15s var(--ease) !important;
+}
+[data-testid="stPageLink"] > a:hover { background: var(--bg-soft) !important; }
+
+.status-row { display: flex; align-items: center; gap: .55rem; margin-bottom: .4rem; }
+.status-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.status-label { font-size: .82rem; font-weight: 600; }
+.status-track { height: 6px; border-radius: 99px; background: var(--bg-soft); overflow: hidden; margin: .5rem 0 .7rem; }
+.status-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--primary), var(--primary-dark)); transition: width .3s var(--ease); }
+
+.dev-card {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: .85rem 1rem;
+}
+.dev-name { font-size: .88rem; font-weight: 800; color: var(--ink); }
+.dev-usn  { font-size: .76rem; color: var(--primary-dark); font-weight: 700; font-family: monospace; }
+.dev-prog { font-size: .72rem; color: var(--muted); margin-top: .2rem; }
+
+/* ==========================================================================
+   FOOTERS
+   ========================================================================== */
+.footer {
+    text-align: center; color: var(--muted); font-size: .82rem;
+    padding: 1.7rem 0 .6rem;
+}
+.footer b { color: var(--ink); }
+
+.page-footer {
+    text-align: center; color: var(--muted); font-size: .8rem;
+    padding: 1.5rem 0 .4rem; border-top: 1px solid var(--border); margin-top: 2rem;
+}
+.page-footer b { color: var(--ink); }
+
+/* ==========================================================================
+   UTILITY SPACERS
+   ========================================================================== */
+.vspace-sm { height: .4rem; }
+.vspace-md { height: .8rem; }
+.vspace-lg { height: 1.4rem; }
+
+</style>
+"""
+
+
+def inject_shared_css():
+    st.markdown(SHARED_CSS, unsafe_allow_html=True)
