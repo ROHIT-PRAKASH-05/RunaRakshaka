@@ -107,8 +107,11 @@ header[data-testid="stHeader"] { background: transparent; }
 
 @media (max-width: 768px) {
 
-    /* Sidebar: fixed full-height overlay */
-    section[data-testid="stSidebar"] {
+    /* Sidebar overlay ONLY while Streamlit marks it expanded.
+       Applying position:fixed unconditionally fights Streamlit's own
+       collapse animation and leaves a half-closed "ghost" overlay —
+       so we gate every overlay rule on aria-expanded="true". */
+    section[data-testid="stSidebar"][aria-expanded="true"] {
         position:   fixed    !important;
         top:        0        !important;
         left:       0        !important;
@@ -122,6 +125,15 @@ header[data-testid="stHeader"] { background: transparent; }
         -webkit-overflow-scrolling: touch !important;
         scrollbar-width: none !important;   /* Firefox */
         -ms-overflow-style:  none !important; /* old Edge/IE */
+    }
+
+    /* When collapsed, fully remove it from the layout/paint —
+       no fixed position, no shadow, no leftover overlay strip */
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        display:    none !important;
+        position:   static !important;
+        box-shadow: none !important;
+        width:      0 !important;
     }
 
     /* Hide the native scroll thumb that was overlapping sidebar text —
@@ -139,7 +151,7 @@ header[data-testid="stHeader"] { background: transparent; }
     }
 
     /* Ensure sidebar background is solid white — no bleed-through */
-    section[data-testid="stSidebar"] > div {
+    section[data-testid="stSidebar"][aria-expanded="true"] > div {
         background: #fff !important;
         height:     100% !important;
     }
