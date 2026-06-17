@@ -156,11 +156,30 @@ header[data-testid="stHeader"] { background: transparent; }
         height:     100% !important;
     }
 
-    /* Keep header solid on mobile so the "Running..." status badge
-       doesn't appear to float over scrolled page content */
+    /* Header: must stay OPAQUE (not transparent) so the "Running..." status
+       badge doesn't float over scrolled page content — but blended into the
+       page background with no shadow, so it reads as empty space rather
+       than a visible white stripe. The collapsedControl button above still
+       pops as its own white pill, so only the arrow looks "present". */
     header[data-testid="stHeader"] {
-        background: #fff !important;
-        box-shadow: 0 1px 0 rgba(15,23,42,.05) !important;
+        background: var(--bg) !important;
+        box-shadow: none !important;
+        border:     none !important;
+    }
+
+    /* Prevent horizontal scrollbar — the hero's decorative glow circle is
+       520px wide by default, which overflows narrow phone viewports and
+       was causing a full-width scrollbar thumb to appear at the bottom */
+    html, body, .stApp, .main {
+        overflow-x: hidden !important;
+    }
+    .hero {
+        overflow: hidden !important;
+    }
+    .hero::before {
+        width:     260px !important;
+        height:    200px !important;
+        max-width: 70vw   !important;
     }
 
     /* Nav link text explicitly dark on mobile */
