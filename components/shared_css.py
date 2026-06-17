@@ -119,12 +119,36 @@ header[data-testid="stHeader"] { background: transparent; }
         z-index:    1000     !important;
         box-shadow: 4px 0 24px rgba(0,0,0,.18) !important;
         overflow-y: auto     !important;
+        -webkit-overflow-scrolling: touch !important;
+        scrollbar-width: none !important;   /* Firefox */
+        -ms-overflow-style:  none !important; /* old Edge/IE */
+    }
+
+    /* Hide the native scroll thumb that was overlapping sidebar text —
+       scrolling still works, the bar itself is just invisible now */
+    section[data-testid="stSidebar"]::-webkit-scrollbar {
+        width:   0 !important;
+        height:  0 !important;
+        display: none !important;
+    }
+
+    /* Some Streamlit versions render a draggable resize handle on the
+       sidebar's right edge — not needed on mobile overlay, hide it */
+    [data-testid="stSidebarResizeHandle"] {
+        display: none !important;
     }
 
     /* Ensure sidebar background is solid white — no bleed-through */
     section[data-testid="stSidebar"] > div {
         background: #fff !important;
         height:     100% !important;
+    }
+
+    /* Keep header solid on mobile so the "Running..." status badge
+       doesn't appear to float over scrolled page content */
+    header[data-testid="stHeader"] {
+        background: #fff !important;
+        box-shadow: 0 1px 0 rgba(15,23,42,.05) !important;
     }
 
     /* Nav link text explicitly dark on mobile */
