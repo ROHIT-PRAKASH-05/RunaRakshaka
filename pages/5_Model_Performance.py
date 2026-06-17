@@ -192,7 +192,7 @@ st.markdown("""
   <div class="ds-header-icon">🏦</div>
   <div>
     <div class="ds-header-title">Personal Loan Default Risk Model</div>
-    <div class="ds-header-sub">Random Forest &nbsp;·&nbsp; 8 Features &nbsp;·&nbsp; 32,581 Records &nbsp;·&nbsp; Dataset 3</div>
+    <div class="ds-header-sub">Random Forest &nbsp;·&nbsp; 8 Features &nbsp;·&nbsp; 26,005 Records &nbsp;·&nbsp; Dataset 3</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
@@ -226,7 +226,7 @@ st.markdown("""
   <div class="ds-header-icon">📈</div>
   <div>
     <div class="ds-header-title">Financial Stability Prediction Model</div>
-    <div class="ds-header-sub">XGBoost &nbsp;·&nbsp; 29 Features &nbsp;·&nbsp; ~10,000 Records &nbsp;·&nbsp; Dataset 5</div>
+    <div class="ds-header-sub">XGBoost &nbsp;·&nbsp; 29 Features &nbsp;·&nbsp; 593,994 Records &nbsp;·&nbsp; Dataset 5</div>
   </div>
 </div>
 """, unsafe_allow_html=True)
