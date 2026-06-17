@@ -66,7 +66,6 @@ st.markdown("""
     <span class="pill pill-blue">3 ML Models</span>
     <span class="pill pill-green">XGBoost + Random Forest</span>
     <span class="pill pill-amber">Real-Time Prediction</span>
-    <span class="pill pill-violet">SDG 1 — No Poverty</span>
   </div>
 </div>
 """, unsafe_allow_html=True)
